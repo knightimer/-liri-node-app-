@@ -5,24 +5,23 @@ require("dotenv").config();
 var keys = require("./keys.js");
 var request = require("request");
 var Twitter = require("twitter");
-var spotify = require("spotify");
+var Spotify = require("node-spotify-api");
 
-var spotify = new Spotify(keys.spotify.id);
-  
+var spotify = new Spotify(keys.spotify);
+var fs = require('fs'); 
 var client = new Twitter(keys.twitter);
+ 
 
 
+var userInput = process.argv[2];
 
+var userChoice = process.argv[3];
 
-var userInput = process.argv;
+// for (var i = 2; i < userInput.length; i++){
+//     userChoice = userChoice + " " + userInput[i];
 
-var userChoice = "";
-
-for (var i = 2; i < userInput.length; i++){
-    userChoice = userChoice + " " + userInput[i];
-
-}
-switch(userInput[2]){
+// }
+switch(userInput){
     case "my-tweets":
     myTweets();
     break;
@@ -32,26 +31,25 @@ switch(userInput[2]){
     break;
 
     case "movie-this":
-    myMovie();
+    myOmbd(userChoice);
     break;
 
     case "do-what-it-says":
-    whatItSays();
+    doWhatItSays();
     break;
-
-
 }
-
 
 function myTweets(){
 
     client.get('statuses/user_timeline', function(error, tweets, response) {
         if(!error){
-        // console.log(tweets);  // The favorites.
-        // console.log(response);  // Raw response object.
+        for ( var i =0; i< tweets.length; i++) {
+            console.log(tweets[0].text);  // The favorites.
+            console.log(tweets[0].created_at);
+        }
         }
     });
-      
+   
 }
 
 function mySpotify(){
@@ -61,42 +59,71 @@ function mySpotify(){
             return;
         }
         else{
-            console.log(data)
+        
         }
+        var songInfo = data.tracks.items;
+            console.log("artist(s): " + songInfo[0].artists[0].name);
+            console.log("song name " + songInfo[0].name);
+            console.log("preview link " + songInfo[0].preview_url);
+            console.log("album " + songInfo[0].album.name);
      
-        // Do something with 'data'
+            // console.log(JSON.stringify(data.tracks.items[0], null, 2))
+     
     });
 }
 
-function myOmdb()
-    var omdb = require('omdb');
- 
-omdb.search('movie-this', function(err, movies) {
-    if(err) {
-        return console.error(err);
+function myOmbd() {
+
+    if(userChoice === undefined) {
+        userChoice = "mr. nobody";
     }
- 
-    if(movies.length < 1) {
-        return console.log('No movies were found!');
-    }
- 
-    movies.forEach(function(movie) {
-        console.log('%s (%d)', movie.title, movie.year);
+// Then run a request to the OMDB API with the movie specified
+var queryUrl = "http://www.omdbapi.com/?t=" + userChoice + "&y=&plot=short&apikey=c44af206"
+    request(queryUrl, function(error, response, body) {
+
+        // If the request is successful (i.e. if the response status code is 200)
+        if (!error && response.statusCode === 200) {
+
+            // Parse the body of the site and recover just the imdbRating
+            // (Note: The syntax below for parsing isn't obvious. Just spend a few moments dissecting it).
+        
+            console.log("* Title of the movie:                              " + JSON.parse(body).Title);
+            console.log("* Year the movie came out:                         " + JSON.parse(body).Year);
+            console.log("* IMDB Rating of the movie:                        " + JSON.parse(body).imdbRating);
+            console.log("* Rotten Tomatoes Rating of the movies:            " + JSON.parse(body).Plot);
+            console.log("* Country where the movie was produced produced:   " + JSON.parse(body).Country);
+            console.log("* Language of the movie:                           " + JSON.parse(body).Language);
+            console.log("* Plot of the movie:                               " + JSON.parse(body).Plot);
+            console.log("* Actors in the movie:                             " + JSON.parse(body).Actors);
+        }
     });
- 
+}
+function doWhatItSays() {
+
+   
+
+    fs.readFile("random.txt", "utf8", function(error, data) {
+
+        if (error){
+            console.log(error)
+        }
+        console.log(data);
+
+        data = data.split(',');
+
+        var command;
+        var parameter;
+
+        
+        if (data.length == 2) {
+            command = data[0];
+            parameter = data[1];
+           
+
+         
+
+    };
 }
 
-var request = require('request');{
-request('http://www.omdbapi.com/?i=tt3896198&apikey=c44af206', function (error, response, body) {
-  console.log('error:', error); // Print the error if one occurred
-  console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-  console.log('body:', body); // Print the HTML for the Google homepage.
-    }
-);
 
-
-
-
-
-
-}
+    )}
